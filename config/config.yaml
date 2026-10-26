@@ -1,0 +1,170 @@
+# Dimensional measurement system — master configuration
+# All inspection parameters live here. Do not hard-code values in Python.
+
+camera:
+  backend: file          # file | folder | basler | hikvision | ids | flir
+  device_id: 0
+  timeout_ms: 2000
+
+calibration:
+  pixel:
+    known_distance_mm: 1.0
+    measured_distance_px: 0.0   # 0 = not calibrated
+    persist_path: data/calibration/pixel_calibration.yaml
+  camera:
+    enabled: false
+    checkerboard_cols: 9
+    checkerboard_rows: 6
+    square_size_mm: 1.0
+    persist_path: data/calibration/camera_calibration.yaml
+  require_for_production: false   # still report widths in pixels until a scale is applied
+
+roi:
+  mode: manual            # manual | fixed | full
+  x: 100
+  y: 100
+  width: 1000
+  height: 800
+
+preprocessing:
+  resize:
+    enabled: false
+    max_dimension: 2000
+  blur:
+    enabled: true
+    method: gaussian      # gaussian | bilateral
+    kernel_size: 3
+    sigma: 1.0
+    bilateral_d: 7
+    bilateral_sigma_color: 50
+    bilateral_sigma_space: 50
+  contrast:
+    enabled: false
+    alpha: 1.2
+    beta: 0
+  clahe:
+    enabled: true
+    clip_limit: 2.0
+    tile_grid_size: 8
+  invert: false           # set true if legs are brighter than background
+
+segmentation:
+  method: adaptive        # adaptive | otsu | global | canny
+  invert_binary: true           # typical backlight / dark-on-light silhouette
+  global_threshold: 127
+  adaptive:
+    block_size: 35
+    C: 7
+    method: gaussian      # mean | gaussian
+  canny:
+    low: 50
+    high: 150
+  morphology:
+    enabled: true
+    kernel_size: 3
+    operations:           # applied in order
+      - close
+      - open
+  fill_holes: true
+  min_component_area: 20
+
+leg_detection:
+  min_area: 8
+  max_area: 8000
+  min_width: 2
+  max_width: 120
+  min_height: 2
+  max_height: 250
+  aspect_ratio_range: [0.15, 4.0]
+  min_solidity: 0.35
+  pin_mode:
+    enabled: true           # two small pins on a larger body (merged by threshold)
+    tophat_kernel: 21
+    body_erode: 9
+    contrast_percentile: 99.6
+    min_area: 6
+    max_area: 1200
+    min_width: 2
+    max_width: 50
+    min_height: 2
+    max_height: 90
+    aspect_ratio_range: [0.15, 4.0]
+    min_solidity: 0.30
+    allow_best_pair: true   # if >2 pin blobs, take the unique best pair
+    pair_score_gap: 0.04
+  pairing:
+    min_score: 0.35
+    size_weight: 0.30
+    orientation_weight: 0.10
+    distance_weight: 0.25
+    position_weight: 0.15
+    shape_weight: 0.20
+    expected_distance_px_min: 20
+    expected_distance_px_max: 1200
+    max_orientation_diff_deg: 90
+    max_centroid_axis_ratio: 12.0
+
+measurement:
+  mode: two_legs          # two_legs | object
+  subpixel:
+    enabled: true
+    corner_win_size: 5
+    corner_zero_zone: -1
+    max_iterations: 40
+    epsilon: 0.01
+  overall_component: true
+
+object_detection:
+  min_area: 200
+  max_area: 50000000
+  min_area_ratio: 0.002   # ignore specks smaller than this fraction of the ROI
+  max_area_ratio: 0.90    # ignore a fill that is almost the whole frame (likely background)
+  auto_invert: true       # retry inverted mask if no object is found
+
+tolerance:
+  object:
+    enabled: false
+    width:
+      min: 0.0
+      max: 10000.0
+    height:
+      min: 0.0
+      max: 10000.0
+  leg_1:
+    width:
+      min: 0.10
+      max: 0.15
+    height:
+      min: 0.20
+      max: 0.30
+  leg_2:
+    width:
+      min: 0.10
+      max: 0.15
+    height:
+      min: 0.20
+      max: 0.30
+  distance:
+    min: 0.50
+    max: 0.60
+  angle_deg:
+    enabled: false
+    min: -15.0
+    max: 15.0
+
+quality:
+  min_contrast_std: 8.0
+  min_sharpness: 15.0
+  warn_only: true         # if true, poor quality is a warning, not a hard fail
+
+debug:
+  enabled: false
+  save_stages: false
+  stage_dir: data/output/debug
+
+reporting:
+  csv_path: data/output/inspections.csv
+  excel_path: data/output/inspections.xlsx
+
+logging:
+  level: INFO

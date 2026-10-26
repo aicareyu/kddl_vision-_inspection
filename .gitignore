@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/output/*.csv
+data/output/*.xlsx
+data/output/*.png
+data/output/debug/
+data/calibration/*.yaml
+data/input/_screen.png
+data/input/crop_*.png
+data/input/from_ui_*.png
+.idea/
+.cursor/
